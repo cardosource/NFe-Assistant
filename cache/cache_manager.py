@@ -10,7 +10,6 @@ class FAISSCacheManager:
     
     def __init__(self, index_path: str = "cache_faiss"):
         self.index_path = index_path
-        # Usando um embedding mais leve e estável
         self.embedding = HuggingFaceEmbeddings(
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             model_kwargs={'device': 'cpu'},  # Força CPU para evitar warnings
@@ -20,7 +19,6 @@ class FAISSCacheManager:
         self.initialize_cache()
     
     def initialize_cache(self):
-        """Inicializa ou carrega o cache FAISS"""
         try:
             self.vectorstore = FAISS.load_local(
                 self.index_path, 
@@ -29,7 +27,6 @@ class FAISSCacheManager:
             )
             print("✅ Cache FAISS carregado com sucesso")
         except Exception as e:
-            # Cria um novo cache se não existir
             self.vectorstore = FAISS.from_texts(
                 ["cache inicial"], 
                 self.embedding, 
@@ -39,12 +36,10 @@ class FAISSCacheManager:
             print("🆕 Novo cache FAISS criado")
     
     def lookup(self, input_text: str, namespace: str = "") -> Optional[str]:
-        """Busca uma resposta no cache usando similaridade semântica"""
         if not input_text.strip():
             return None
             
         try:
-            # Busca perguntas similares no cache
             docs = self.vectorstore.similarity_search(
                 input_text, 
                 k=1,
@@ -52,7 +47,6 @@ class FAISSCacheManager:
             )
             
             if docs and self._is_similar_enough(input_text, docs[0].page_content):
-                # Retorna a resposta do cache se encontrou pergunta similar
                 return docs[0].metadata.get("resposta", None)
             
             return None
@@ -62,12 +56,9 @@ class FAISSCacheManager:
             return None
     
     def _is_similar_enough(self, input_text: str, cached_text: str, threshold: float = 0.7) -> bool:
-        """Verifica se as perguntas são suficientemente similares"""
-        # Implementação simples de similaridade
         input_words = set(input_text.lower().split())
         cached_words = set(cached_text.lower().split())
         
-        # Remove palavras muito comuns
         stop_words = {
             "o", "a", "os", "as", "de", "da", "do", "em", "para", "com", 
             "é", "são", "um", "uma", "uns", "umas", "que", "como", "qual"
@@ -84,15 +75,12 @@ class FAISSCacheManager:
         return similarity >= threshold
     
     def update(self, input_text: str, response: Any, namespace: str = ""):
-        """Adiciona nova pergunta-resposta ao cache"""
         if not input_text.strip():
             return
             
         try:
-            # Converte a resposta para string se não for
             response_str = str(response) if not isinstance(response, str) else response
             
-            # Cria documento com metadados
             metadata = {
                 "pergunta": input_text,
                 "resposta": response_str,
@@ -100,21 +88,18 @@ class FAISSCacheManager:
                 "timestamp": str(np.datetime64('now'))
             }
             
-            # Adiciona ao vectorstore
             self.vectorstore.add_texts(
                 texts=[input_text],
                 metadatas=[metadata]
             )
             
-            # Salva o cache periodicamente (não a cada chamada para performance)
-            if np.random.random() < 0.1:  # Salva aleatoriamente ~10% das vezes
+            if np.random.random() < 0.1:  
                 self.vectorstore.save_local(self.index_path)
                 
         except Exception as e:
             print(f"⚠️ Erro ao atualizar cache: {e}")
     
     def clear_cache(self):
-        """Limpa todo o cache"""
         try:
             self.vectorstore = FAISS.from_texts(
                 ["cache inicial"], 
@@ -127,9 +112,7 @@ class FAISSCacheManager:
             print(f"⚠️ Erro ao limpar cache: {e}")
     
     def get_cache_stats(self) -> Dict[str, int]:
-        """Retorna estatísticas do cache"""
         try:
-            # Método aproximado para contar documentos
             docs = self.vectorstore.similarity_search("", k=1000)
             return {
                 "total_documentos": len(docs),
@@ -139,7 +122,6 @@ class FAISSCacheManager:
             return {"total_documentos": 0, "tamanho_cache": "0 entradas"}
     
     def save_cache(self):
-        """Salva o cache explicitamente"""
         try:
             self.vectorstore.save_local(self.index_path)
             print("✅ Cache salvo com sucesso")
