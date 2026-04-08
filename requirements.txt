@@ -188,7 +188,7 @@ torchvision==0.22.1+cpu
 tornado==6.5.1
 tqdm==4.67.1
 traitlets==5.14.3
-transformers==4.55.4
+transformers==5.0.0rc3
 typer==0.16.0
 types-python-dateutil==2.9.0.20250708
 types-requests==2.32.4.20250611
