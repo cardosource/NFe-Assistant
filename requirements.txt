@@ -87,7 +87,7 @@ langgraph==0.6.2
 langgraph-checkpoint==2.1.1
 langgraph-prebuilt==0.6.2
 langgraph-sdk==0.2.0
-langsmith==0.4.8
+langsmith==0.8.0
 lark==1.2.2
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
